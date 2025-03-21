@@ -1,0 +1,59 @@
+<form onsubmit="uploadForm(event)">
+    <input type="file" name="audio">
+    <input type="file" name="video">
+    <button type="submit">Отправить!</button>
+</form>
+<script>
+    let progressBar = 0
+    function uploadForm(event) {
+        event.preventDefault();
+        form = new FormData(event.target)
+        let files = form.getAll("video")
+        uploadFile(files, "http://localhost:8000/upload")
+        
+    }
+    function uploadFile(files, url) {
+        if (files.length) {
+            console.log(files);
+            
+            files.forEach(file => {
+                let websocketUpload = new WebSocket(url)
+                websocketUpload.onopen = () => {
+                    var reader = new FileReader();
+                    const chunkSize = 64 * 16 * 1024
+                    let offset = 0
+
+                    function nextChunk() {
+                        chunk = file.slice(offset,offset + chunkSize)
+                        reader.readAsArrayBuffer(chunk)    
+                    }
+                    console.log(file.name);
+                    websocketUpload.send(JSON.stringify(
+                        { "name":file.name, "done": false}))
+                    let chunk = undefined
+                    reader.onload = (event) => {
+                        if (websocketUpload.readyState == websocketUpload.OPEN) {
+                            websocketUpload.send(event.target.result)
+                        }
+                    }
+                    nextChunk()
+                    websocketUpload.onmessage = (event) => {
+                        if (event.data == "OK") {
+                            offset += chunkSize
+                            progressBar = (offset / file.size) * 100;
+                            console.log(progressBar);
+
+                            if (offset < file.size) {
+                                nextChunk()
+                            }else {
+                                websocketUpload.send(JSON.stringify({name:file.name, done: true}))
+                                console.log("Файл отправлен")
+                            }    
+                        }             
+                    }
+                }
+                
+            });
+        }
+    }
+</script>
