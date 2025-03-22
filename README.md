@@ -1,4 +1,7 @@
-Возможность загружать файлы через WEBSOCKET
-
-Python:
-- FastAPI
+Возможность загружать файлы через По чанково
+WEBSOCKET: 
+- Python:
+- - FastAPI
+CHUNK:
+- PHP
+- 
