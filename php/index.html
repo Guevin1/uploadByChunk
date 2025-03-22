@@ -1,0 +1,58 @@
+<form onsubmit="uploadForm(event)">
+    <input type="file" name="audio">
+    <input type="file" name="video">
+    <button type="submit">Отправить!</button>
+</form>
+<script>
+    let progressBar = 0
+    function uploadForm(event) {
+        event.preventDefault();
+        form = new FormData(event.target)
+        let files = form.getAll("video")
+        uploadFile(files, "upload.php")
+        
+    }
+    function uploadFile(files, url) {
+        if (files.length) {
+            console.log(files);
+            
+            files.forEach(file => {
+                var reader = new FileReader();
+                const chunkSize = 50 * 1024 * 1024
+                let offset = 0
+
+                function nextChunk() {
+                    chunk = file.slice(offset,offset + chunkSize)
+                    reader.readAsArrayBuffer(chunk)    
+                }
+                console.log(file.name);
+                let chunk = undefined
+                reader.onload = (event) => {
+                    let start = offset == 0
+                    let resp = fetch(url+"?name="+file.name +"&start="+start+"&dir=audio", {
+                        method: "POST",
+                        body: event.target.result
+                    }).then(respo => respo.text()).then(body => {
+                        console.log(body);
+                        
+                        if (body == "OK") {
+                            offset += chunkSize
+                            progressBar = (offset / file.size) * 100;
+                            console.log(progressBar);
+
+                            if (offset < file.size) {
+                                nextChunk()
+                            }else {
+                                console.log("Файл отправлен")
+                            }
+                        }
+                    })
+                    console.log(resp);
+                    
+                    
+                }
+                nextChunk()
+            });
+        }
+    }
+</script>
