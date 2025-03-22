@@ -1,7 +1,6 @@
 Возможность загружать файлы через По чанково
 WEBSOCKET: 
 - Python:
-- - FastAPI
+  - FastAPI
 CHUNK:
 - PHP
-- 
